@@ -1,0 +1,5 @@
+{
+  "name": "SimpleBill",
+  "description": "A lightweight, client-side billing application for freelancers and small businesses. Manages invoices, customers, and payments using Google Sheets as the database. Features role-based access control and responsive design.",
+  "requestFramePermissions": []
+}

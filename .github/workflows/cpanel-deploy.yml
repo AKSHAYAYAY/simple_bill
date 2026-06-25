@@ -1,0 +1,49 @@
+name: Deploy SimpleBill to cPanel
+
+on:
+  push:
+    branches:
+      - main # Auto-deploys every time you push to the main branch
+
+jobs:
+  web-deploy:
+    name: Build & Deploy via FTP
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      # --- 1. BUILD THE REACT FRONTEND ---
+      - name: Install Frontend Dependencies
+        run: npm ci
+
+      - name: Build Frontend (React/Vite)
+        run: npm run build
+        env:
+          # This tells your React app to talk to the new cPanel API instead of localhost/Vercel
+          VITE_API_BASE_URL: https://simplebillapi.bizbytech.in
+
+      # --- 2. DEPLOY FRONTEND ---
+      - name: Deploy Frontend to cPanel via FTP
+        uses: SamKirkland/FTP-Deploy-Action@v4.3.4
+        with:
+          server: ${{ secrets.FTP_SERVER }}
+          username: ${{ secrets.FTP_USERNAME }}
+          password: ${{ secrets.FTP_PASSWORD }}
+          local-dir: ./dist/ # The folder where React compiled the production code
+          server-dir: ./simplebill.bizbytech.in/ # IMPORTANT: Adjust this if cPanel put your subdomain inside public_html (e.g. ./public_html/simplebill.bizbytech.in/)
+
+      # --- 3. DEPLOY BACKEND ---
+      - name: Deploy Backend API to cPanel via FTP
+        uses: SamKirkland/FTP-Deploy-Action@v4.3.4
+        with:
+          server: ${{ secrets.FTP_SERVER }}
+          username: ${{ secrets.FTP_USERNAME }}
+          password: ${{ secrets.FTP_PASSWORD }}
+          local-dir: ./backend/ # We upload the raw Node.js backend files directly
+          server-dir: ./simplebillapi.bizbytech.in/ # IMPORTANT: Must match the "Application root" you set in the Node.js App in cPanel
